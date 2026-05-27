@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @ApplicationScoped
 public class LoanApplicationService {
@@ -186,6 +187,16 @@ public class LoanApplicationService {
         return value
                 .divide(BigDecimal.valueOf(1000), 0, RoundingMode.UP)
                 .multiply(BigDecimal.valueOf(1000));
+    }
+
+    public BaseResponse<Object> getListLoanApplication(LoanApplicationFilterDto loanApplicationRequestDto) throws Exception{
+        try {
+            List<LoanApplication> loanApplications = loanApplicationRepository.findByFilter(loanApplicationRequestDto);
+            return new BaseResponse<Object>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, loanApplications);
+        } catch (Exception ex){
+            log.info("Error in getListLoanApplication : ", ex);
+            throw new Exception(ex);
+        }
     }
 
 }

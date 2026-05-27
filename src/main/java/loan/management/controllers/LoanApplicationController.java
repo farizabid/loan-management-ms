@@ -54,4 +54,13 @@ public class LoanApplicationController {
     ) throws Exception {
         return loanApplicationService.getLoanApplicationDetail(requestDto);
     }
+
+    @POST
+    @RolesAllowed({"ADMIN","USER"})
+    @Path("/getListLoanApplication")
+    public BaseResponse<Object> getListLoanApplication(
+            LoanApplicationFilterDto requestDto
+    ) throws Exception {
+        return loanApplicationService.getListLoanApplication(requestDto);
+    }
 }
