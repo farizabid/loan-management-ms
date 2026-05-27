@@ -46,5 +46,3 @@ nb-configuration.xml
 
 # JWT
 logs/
-
-application.properties
