@@ -45,9 +45,6 @@ nb-configuration.xml
 .certs/
 
 # JWT
-private.pem
-public.pem
-
 logs/
 
 application.properties
