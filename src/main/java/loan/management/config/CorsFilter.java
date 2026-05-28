@@ -1,27 +1,30 @@
 package loan.management.config;
 
-import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.container.ContainerResponseContext;
-import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.ext.Provider;
+import io.quarkus.vertx.web.RouteFilter;
+import io.vertx.ext.web.RoutingContext;
 
-@Provider
-public class CorsFilter implements ContainerResponseFilter {
+public class CorsFilter {
 
     private static final String FRONTEND_URL =
             System.getenv().getOrDefault("FRONTEND_URL", "http://localhost:5173");
 
-    @Override
-    public void filter(ContainerRequestContext requestContext,
-                       ContainerResponseContext responseContext) {
+    // Menggunakan @RouteFilter dengan priority tinggi agar berjalan paling awal
+    @RouteFilter(100)
+    void myCorsFilter(RoutingContext rc) {
 
-        responseContext.getHeaders().add("Access-Control-Allow-Origin", FRONTEND_URL);
-        responseContext.getHeaders().add("Access-Control-Allow-Headers",
-                "origin, content-type, accept, authorization");
-        responseContext.getHeaders().add("Access-Control-Allow-Methods",
-                "GET, POST, PUT, DELETE, OPTIONS");
+        // Tambahkan header CORS ke objek HTTP Response langsung
+        rc.response().headers()
+                .set("Access-Control-Allow-Origin", FRONTEND_URL)
+                .set("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+                .set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+                .set("Access-Control-Allow-Credentials", "true");
 
-        // penting untuk preflight
-        responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
+        // Jika request berupa OPTIONS (Preflight), langsung sudahi di sini
+        if ("OPTIONS".equalsIgnoreCase(rc.request().method().name())) {
+            rc.response().setStatusCode(200).end();
+        } else {
+            // Lanjutkan request ke filter berikutnya / @RolesAllowed
+            rc.next();
+        }
     }
 }
