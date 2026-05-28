@@ -25,6 +25,9 @@ public class User extends CommonObjectActiveAndCreatedDate implements Serializab
     @Column(name = "password", length = 256, nullable = false)
     public String password;
 
+    @Column(name = "email", length = 256, nullable = true)
+    public String email;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = true, columnDefinition = "varchar(255) default 'USER'")
     public UserType role = UserType.USER;

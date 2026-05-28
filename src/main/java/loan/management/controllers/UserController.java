@@ -36,4 +36,12 @@ public class UserController {
 
         return userService.login(userDto);
     }
+
+    @POST
+    @Path("/getUser")
+    public BaseResponse<Object> getUser(
+            UserDto userDto
+    ) throws Exception {
+        return userService.getUser(userDto);
+    }
 }

@@ -4,7 +4,11 @@ import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import loan.management.dto.LoanApplicationFilterDto;
 import loan.management.models.LoanApplication;
+import loan.management.models.type.LoanApplicationStatus;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,4 +54,45 @@ public class LoanApplicationRepository implements PanacheRepository<LoanApplicat
                 .page(page, size)
                 .list();
     }
+
+    public long countLoanByPeriod(LocalDate start, LocalDate end) {
+
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+        return count(
+                "createdDatetime between ?1 and ?2",
+                startDateTime, endDateTime
+        );
+    }
+
+    public long countLoanByStatusAndPeriod(LoanApplicationStatus status, LocalDate start, LocalDate end) {
+
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+        return count(
+                "status = ?1 and createdDatetime between ?2 and ?3",
+                status,
+                startDateTime,
+                endDateTime
+        );
+    }
+
+    public List<LoanApplication> findRecentActivity() {
+        return find("order by createdDatetime desc")
+                .page(0, 9)
+                .list();
+    }
+
+    public List<LoanApplication> findApprovedWithDate(LocalDate start, LocalDate end) {
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+        return find(
+                "status = ?1 and createdDatetime between ?2 and ?3",
+                LoanApplicationStatus.APPROVED, startDateTime, endDateTime
+        ).list();
+    }
+
 }

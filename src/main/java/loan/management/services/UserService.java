@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Set;
 
 @ApplicationScoped
@@ -38,6 +39,7 @@ public class UserService {
             user.username = sr.username;
             user.password = PasswordUtil.hash(sr.password);
             user.role = sr.role;
+            user.email = sr.email;
 
             ObjectActiveAndCreatedDateUtil.registerObject(user);
             user.persist();
@@ -82,6 +84,21 @@ public class UserService {
                 .groups(Set.of(role))
                 .expiresIn(Duration.ofHours(1))
                 .sign();
+    }
+
+    public BaseResponse<Object> getUser(UserDto lr) throws Exception {
+        try {
+            User user = userRepository.findByUsername(lr.username);
+
+            if (user == null){
+                return new BaseResponse<>(GeneralConstant.FAILED_CODE, GeneralConstant.USER_NOT_FOUND_MSG, "");
+            }
+
+            return new BaseResponse<>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, user);
+        } catch (Exception ex){
+            log.info("Error in getUser : ", ex);
+            throw new Exception(ex);
+        }
     }
 
 }

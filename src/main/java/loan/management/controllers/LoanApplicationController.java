@@ -2,11 +2,9 @@ package loan.management.controllers;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import loan.management.constants.GeneralConstant;
 import loan.management.dto.*;
 import loan.management.services.LoanApplicationService;
 import loan.management.services.UserService;
@@ -62,5 +60,13 @@ public class LoanApplicationController {
             LoanApplicationFilterDto requestDto
     ) throws Exception {
         return loanApplicationService.getListLoanApplication(requestDto);
+    }
+
+    @GET
+    @RolesAllowed({"ADMIN","USER"})
+    @Path("/getSummaryDashboard")
+    public BaseResponse<Object> getSummaryDashboard()
+            throws Exception {
+        return new BaseResponse<>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, loanApplicationService.getSummaryDashboard());
     }
 }

@@ -10,12 +10,17 @@ import loan.management.models.LoanInstallment;
 import loan.management.models.type.LoanApplicationStatus;
 import loan.management.repositories.LoanApplicationRepository;
 import loan.management.repositories.LoanInstallmentRepository;
+import loan.management.repositories.UserRepository;
 import loan.management.utils.ObjectActiveAndCreatedDateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @ApplicationScoped
@@ -31,6 +36,8 @@ public class LoanApplicationService {
     ApplicationCounterService applicationCounterService;
 
     private static final Logger log = LoggerFactory.getLogger(LoanApplicationService.class);
+    @Inject
+    UserRepository userRepository;
 
     @Transactional
     public BaseResponse<Object> createLoanApplication(LoanApplicationRequestDto loanApplicationRequestDto) throws Exception {
@@ -199,4 +206,96 @@ public class LoanApplicationService {
         }
     }
 
+    public BaseResponse<Object> getSummaryDashboard() throws Exception {
+        try {
+            LocalDate now = LocalDate.now();
+
+            LocalDate startCurr = now.withDayOfMonth(1);
+            LocalDate endCurr = now.withDayOfMonth(now.lengthOfMonth());
+
+            LocalDate startPrev = now.minusMonths(1).withDayOfMonth(1);
+            LocalDate endPrev = now.minusMonths(1).withDayOfMonth(now.minusMonths(1).lengthOfMonth());
+
+            long currLoan = loanApplicationRepository.countLoanByPeriod(startCurr, endCurr);
+            long pevLoan = loanApplicationRepository.countLoanByPeriod(startPrev, endPrev);
+
+            long growthRate = growth(currLoan, pevLoan);
+
+            DashboardSummaryDto dto = new DashboardSummaryDto();
+            dto.totalLoan = loanApplicationRepository.countLoanByPeriod(startCurr, endCurr);
+            dto.pendingApproval = loanApplicationRepository.countLoanByStatusAndPeriod(LoanApplicationStatus.SUBMITTED, startCurr, endCurr);
+            dto.approvedLoan = loanApplicationRepository.countLoanByStatusAndPeriod(LoanApplicationStatus.APPROVED, startCurr, endCurr);
+            dto.growthRate = growthRate;
+            dto.activeUser = userRepository.countActiveUser();
+            dto.avgProcessingTime = formatAvgTime(calculateAvgProcessingTime(startCurr, endCurr));
+            List<LoanApplication> models = loanApplicationRepository.findRecentActivity();
+
+            dto.recentActivities = models.stream().map(l -> {
+                ActivityDto activity = new ActivityDto();
+                activity.action = l.status.name();
+                activity.customerId = l.customerId;
+                activity.referenceNo = l.referenceNo;
+                activity.createdDate = l.createdDatetime;
+
+                return activity;
+            }).toList();
+
+            return new BaseResponse<>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, dto);
+        } catch (Exception ex){
+            log.info("Error in getSummaryDashboard : ", ex);
+            throw new Exception(ex);
+        }
+    }
+
+    private long growth(long current, long previous) {
+        if (previous == 0) return 100;
+        return Math.round(((current - previous) * 100.0) / previous);
+    }
+
+    public double calculateAvgProcessingTime(LocalDate start, LocalDate end) {
+
+        List<LoanApplication> list =
+                loanApplicationRepository.findApprovedWithDate(start, end);
+
+        if (list.isEmpty()) return 0;
+
+        long totalMinutes = 0;
+        int count = 0;
+
+        for (LoanApplication l : list) {
+
+            if (l.getCreatedDatetime() == null || l.getUpdatedDatetime() == null) {
+                continue;
+            }
+
+            long minutes = ChronoUnit.MINUTES.between(
+                    l.getCreatedDatetime(),
+                    l.getUpdatedDatetime()
+            );
+
+            totalMinutes += minutes;
+            count++;
+        }
+
+        if (count == 0) return 0;
+
+        return totalMinutes / (double) count;
+    }
+
+    public String formatAvgTime(double minutes) {
+
+        if (minutes < 60) {
+            return Math.round(minutes) + " mins";
+        }
+
+        double hours = minutes / 60;
+
+        if (hours < 24) {
+            return Math.round(hours * 10.0) / 10.0 + " hours";
+        }
+
+        double days = hours / 24;
+
+        return Math.round(days * 10.0) / 10.0 + " days";
+    }
 }
