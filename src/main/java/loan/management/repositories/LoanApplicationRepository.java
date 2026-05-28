@@ -42,7 +42,7 @@ public class LoanApplicationRepository implements PanacheRepository<LoanApplicat
             params.put("customerId", filter.customerId);
         }
 
-        if (filter.status != null && !filter.status.isBlank()) {
+        if (filter.status != null) {
             query.append(" and status = :status");
             params.put("status", filter.status);
         }
