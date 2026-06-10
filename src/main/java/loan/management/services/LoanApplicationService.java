@@ -11,6 +11,7 @@ import loan.management.models.type.LoanApplicationStatus;
 import loan.management.repositories.LoanApplicationRepository;
 import loan.management.repositories.LoanInstallmentRepository;
 import loan.management.repositories.UserRepository;
+import loan.management.services.messaging.TicketManagementService;
 import loan.management.utils.ObjectActiveAndCreatedDateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -34,6 +33,9 @@ public class LoanApplicationService {
 
     @Inject
     ApplicationCounterService applicationCounterService;
+
+    @Inject
+    TicketManagementService ticketManagementService;
 
     private static final Logger log = LoggerFactory.getLogger(LoanApplicationService.class);
     @Inject
@@ -297,5 +299,39 @@ public class LoanApplicationService {
         double days = hours / 24;
 
         return Math.round(days * 10.0) / 10.0 + " days";
+    }
+
+    public BaseResponse<Object> createTicket(LoanApplicationRequestDto requestDto) throws Exception{
+        try {
+            LoanApplication loanApplication = LoanApplication.findById(requestDto.loanApplicationId);
+
+            if (loanApplication==null){
+                return new BaseResponse<Object>(GeneralConstant.FAILED_CODE, "application is not found", "");
+            }
+
+            CreateTicketPayloadDTO reqDto = new CreateTicketPayloadDTO();
+            reqDto.referenceId = loanApplication.loanApplicationId;
+            reqDto.referenceNumber = loanApplication.referenceNo;
+            reqDto.customerId = loanApplication.customerId;
+            reqDto.customerName = loanApplication.customerName;
+
+            ticketManagementService.informTicketRegister(reqDto);
+
+            return new BaseResponse<Object>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, "");
+        } catch (Exception ex){
+            log.info("Error in createTicket : ", ex);
+            throw new Exception(ex);
+        }
+    }
+
+    public BaseResponse<Object> cancelTicket(CancelTicketPayloadDTO requestDto) throws Exception{
+        try {
+            ticketManagementService.informTicketCancel(requestDto);
+
+            return new BaseResponse<Object>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, "");
+        } catch (Exception ex){
+            log.info("Error in cancelTicket : ", ex);
+            throw new Exception(ex);
+        }
     }
 }

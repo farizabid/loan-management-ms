@@ -89,6 +89,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-reactive-routes</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-messaging-kafka</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

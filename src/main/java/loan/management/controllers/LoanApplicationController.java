@@ -6,6 +6,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import loan.management.constants.GeneralConstant;
 import loan.management.dto.*;
+import loan.management.models.LoanApplication;
 import loan.management.services.LoanApplicationService;
 import loan.management.services.UserService;
 
@@ -68,5 +69,23 @@ public class LoanApplicationController {
     public BaseResponse<Object> getSummaryDashboard()
             throws Exception {
         return new BaseResponse<>(GeneralConstant.SUCCESS_CODE, GeneralConstant.SUCCESS_MSG, loanApplicationService.getSummaryDashboard());
+    }
+
+    @POST
+    @RolesAllowed({"ADMIN","USER"})
+    @Path("/createTicket")
+    public BaseResponse<Object> createTicket(
+            LoanApplicationRequestDto requestDto
+    ) throws Exception {
+        return loanApplicationService.createTicket(requestDto);
+    }
+
+    @POST
+    @RolesAllowed({"ADMIN","USER"})
+    @Path("/cancelTicket")
+    public BaseResponse<Object> cancelTicket(
+            CancelTicketPayloadDTO requestDto
+    ) throws Exception {
+        return loanApplicationService.cancelTicket(requestDto);
     }
 }
